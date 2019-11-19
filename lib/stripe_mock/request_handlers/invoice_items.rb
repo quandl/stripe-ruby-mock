@@ -32,7 +32,8 @@ module StripeMock
       end
 
       def list_invoice_items(route, method_url, params, headers)
-        Data.mock_list_object(invoice_items.values, params)
+        items = filter_line_items(invoice_items.values, params)
+        Data.mock_list_object(items, params)
       end
 
       def get_invoice_item(route, method_url, params, headers)
@@ -40,6 +41,21 @@ module StripeMock
         assert_existence :invoice_item, $1, invoice_items[$1]
       end
 
+      def filter_line_items(line_items, filters)
+        line_items.select do |item|
+          if item[:customer] == filters[:customer]
+            pending_filter(item, filters[:pending]) if filters.key?(:pending)
+          end
+        end
+      end
+
+      def pending_filter(item, pending)
+        if pending
+          item if item[:invoice].nil?
+        else
+          item unless item[:invoice].nil?
+        end
+      end
     end
   end
 end
