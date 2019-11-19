@@ -6,6 +6,12 @@ shared_examples 'Invoice API' do
     it "creates a stripe invoice" do
       invoice = Stripe::Invoice.create
       expect(invoice.id).to match(/^test_in/)
+      expect(invoice.status).to eq('open')
+    end
+
+    it "creates a stripe invoice with a status of draft" do
+      invoice = Stripe::Invoice.create(auto_advance: false)
+      expect(invoice.status).to eq('draft')
     end
 
     it "stores a created stripe invoice in memory" do
@@ -103,6 +109,20 @@ shared_examples 'Invoice API' do
       customer_invoice.pay
 
       expect(Stripe::Charge.list.data.first.customer).to eq customer.id
+    end
+  end
+
+  context "finalizing an invoice" do
+    before do
+      @invoice = Stripe::Invoice.create(auto_advance: false)
+    end
+
+    it 'it updates the status to open' do
+      expect(@invoice.status).to eq('draft')
+
+      @invoice = @invoice.finalize_invoice
+
+      expect(@invoice.status).to eq('open')
     end
   end
 
