@@ -121,7 +121,18 @@ module StripeMock
       end
 
       def list_customers(route, method_url, params, headers)
-        Data.mock_list_object(customers.values, params)
+        filtered_customers = filter_customers(customers.values, params)
+        Data.mock_list_object(filtered_customers, params)
+      end
+
+      def filter_customers(customers, filters)
+        customers.select do |customer|
+          email_filter(customer, filters[:email]) if filters.key?(:email)
+        end
+      end
+
+      def email_filter(customer, email)
+        customer if customer[:email] == email
       end
 
       def delete_customer_discount(route, method_url, params, headers)
